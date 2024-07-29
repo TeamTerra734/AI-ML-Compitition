@@ -1,0 +1,7 @@
+.mainUser{
+    /* padding-top: 80px;? */
+    height: auto !important;
+    width: 100vw !important;
+
+    background-color: var(--SIA-blue);
+}
