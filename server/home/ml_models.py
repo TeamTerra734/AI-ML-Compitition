@@ -12,8 +12,8 @@ TF_ENABLE_ONEDNN_OPTS=0
 
 # Define the paths to your models
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-model_path = os.path.join(BASE_DIR, 'home', 'prob_models', 'latest_model.h5')
-satellite_image_model_path = os.path.join(BASE_DIR, 'home', 'prob_models', 'latest_satelite_image.h5')
+deforestation_model_path = os.path.join(BASE_DIR, 'home', 'prob_models', 'Deforestation.h5')
+satellite_image_model_path = os.path.join(BASE_DIR, 'home', 'prob_models', 'cnn_model_area.h5')
 iot_model_pkl = os.path.join(BASE_DIR, 'home', 'prob_models', 'latest_iot.pkl')
 iot_model_h5 = os.path.join(BASE_DIR, 'home', 'prob_models', 'latest_iot.h5')
 
@@ -32,16 +32,16 @@ def load_models():
     try:
         # Log paths
         print(f"Base directory: {BASE_DIR}")
-        print(f"Model path: {model_path}")
+        print(f"Model path: {deforestation_model_path}")
         print(f"Satellite image model path: {satellite_image_model_path}")
         print(f"IoT model path: {iot_model_pkl}")
 
         # Check existence and load model
-        if not os.path.exists(model_path):
-            print(f"Model file not found at {model_path}")
+        if not os.path.exists(deforestation_model_path):
+            print(f"Model file not found at {deforestation_model_path}")
             return None, None, None
-        model = load_model(model_path)
-        print(f"Model loaded successfully from {model_path}")
+        deforestaion_model = load_model(deforestation_model_path)
+        print(f"Model loaded successfully from {deforestation_model_path}")
 
         # Check existence and load satellite image model
         
@@ -52,71 +52,49 @@ def load_models():
         model3_pipe=pkl.load(open(iot_model_pkl,"rb"))
         model3_keras=load_model(iot_model_h5)
         print("iot in the house")
-        return model, satellite_image_model,model3_pipe, model3_keras
+        return deforestaion_model,satellite_image_model,model3_pipe, model3_keras
     except Exception as e:
         print(f"Error loading models: {e}")
         return None, None, None,None
     
 
 
-def predict_deforestation_pollution(model, img, img_size=(224, 224)):
+def predict_deforestation_pollution(model, sample_image, img_size=(224, 224)):
 
     # Load and preprocess image
     
     # Ensure the image is in RGB mode
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
-    
-    # Resize the image
-    img = img.resize(img_size)
-    
-    # Convert image to numpy array
-    x = image.img_to_array(img)
-    
-    # Expand dimensions to match the input shape of the model
-    x = np.expand_dims(x, axis=0)
-    
-    # Normalize pixel values
-    x = x / 255.0
-    
-    # Ensure the array is of type float32
-    x = x.astype('float32')
+
+    if sample_image.mode != 'RGB':
+        sample_image = sample_image.convert('RGB')
+    sample_image = sample_image.resize((224,224))
+    sample_image = image.img_to_array(sample_image)
+    sample_image =np.expand_dims(sample_image,axis=0)
+    sample_image = sample_image.astype('float32')
     
     # Make a prediction using the model
-    preds = model.predict(x)
+    preds = model.predict(sample_image)
     return preds
 
 
-def satelite_image_classification(model,img,img_size=(72,128)):
+def satelite_image_classification(model, sample_image):
     classes = {
-    0: "cloudy",
-    1: "desert",
-    2: "water",
-    3: "green_area"
+        0: "cloudy",
+        1: "desert",
+        2: "water",
+        3: "green_area"
     }
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
-
-    # Resize the image
-    img = img.resize(img_size)
-
-    # Convert image to numpy array
-    x = image.img_to_array(img)
-
-    # Expand dimensions to match the input shape of the model
-    x = np.expand_dims(x, axis=0)
-
-    # Normalize pixel values
-    x = x / 255.0
-
-    # Ensure the array is of type float32
-    x = x.astype('float32')
-
+    if sample_image.mode != 'RGB':
+        sample_image = sample_image.convert('RGB')
+    sample_image = sample_image.resize((224,224))
+    sample_image = image.img_to_array(sample_image)
+    sample_image =np.expand_dims(sample_image,axis=0)
+    sample_image = sample_image.astype('float32')
     # Make a prediction using the model
+    
+    predictions = model.predict(sample_image)
 
-    predictions = model.predict(x)
-
-    predicted_class_index = tf.argmax(predictions, axis=1).numpy()[0]
+    predicted_class_index = np.argmax(predictions)
     predicted_class = classes[predicted_class_index]
 
     return predicted_class
@@ -170,3 +148,4 @@ if __name__ == "__main__":
         print("All models loaded successfully")
     else:
         print("Failed to load one or more models")
+

@@ -68,14 +68,7 @@ function ImageUploadForm(props) {
         }));
     };
     const sendData = async () => {
-        setData1({
-            deforestationProbability: null,
-            airPollutionProbability: null,
-            areaClassification: null,
-            airQualityClassification: null,
-            summary: null,
-            actionableItems: null
-        });
+        setData1(null);
         if (props.type == "UserInsightScan")
             setData2(null);
         if (location && date && (selectedFile)) {
@@ -114,12 +107,11 @@ function ImageUploadForm(props) {
                 if (response.data) {
                     setStatusMessage('Data submitted successfully!');
                     setData1({
-                        "deforestationProbability": response.data.data.deforestationProbability,
-                        "airPollutionProbability":response.data.data.airPollutionProbability,
                         "areaClassification": response.data.data.areaClassification,
                         "airQualityClassification": response.data.data.airQualityClassification,
+                        "prob_array":response.data.data.prob_array,
                         "summary":  response.data.data.summary,
-                        "actionableItems": response.data.data.actions
+                        "actions": response.data.data.actions
                     }
                     )
                     if (props.type == "UserInsightScan")

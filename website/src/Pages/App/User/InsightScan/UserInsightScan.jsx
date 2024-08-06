@@ -8,7 +8,7 @@ import StatusTable from "../../Components/StatusTable";
 import ShowArea from "../../Components/ShowArea";
 import AirIndexClassifier from "../../Components/AirIndexClassifier"
 const UserInsightScan = () => {
-    const [analysisData, setAnalysisData] = useState({'areaClassification': 'desert', 'airQualityClassification': 'Good', 'summary': 'The satellite image shows a desert region with signs of deforestation. The deforestation probability is highest for selective logging (0.47), followed by slash and burn (0.19) and habitation (0.06). The image shows signs of smoke and burnt areas, indicating potential fires. The air quality is currently good, but the deforestation and potential fires could negatively impact air quality in the future.  The location is Ahmedabad.', 'actions': ['Promote sustainable forestry practices to reduce deforestation.', 'Implement fire prevention measures to minimize the risk of wildfires.', 'Educate local communities about the importance of environmental conservation and sustainable land management.', 'Support initiatives to restore degraded ecosystems and promote reforestation.'], 'prob_array': [[0.4713446795940399, 'selective_logging'], [0.18966324627399445, 'slash_burn'], [0.060643553733825684, 'habitation']]});
+    const [analysisData, setAnalysisData] = useState(null);
     const [formData, setFormData] = useState(null);
     // Function to check if any value in analysisData is not null
     const hasValidData = () => {

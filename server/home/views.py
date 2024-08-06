@@ -181,7 +181,7 @@ def upload_image(request):
     if request.method == 'POST':
             image = request.FILES.get('image')
             img = Image.open(image)
-            print(predict_deforestation_pollution(model,img),"prediction")
+            print(predict_deforestation_pollution(deforestation_model,img),"prediction")
 
             title = request.POST.get('title')
             description = request.POST.get('description')
@@ -203,7 +203,7 @@ def upload_image(request):
 
 
 # Load models at the start
-model, satellite_image_model, iot_pipe,iot_model = load_models()
+deforestation_model, satellite_image_model, iot_pipe,iot_model = load_models()
 
 
 
@@ -297,13 +297,14 @@ def upload_singular_data(request):
             print(iot_data)
 
             # Prediction
-            pred = predict_deforestation_pollution(model, image)
-            deforestation_prob = pred[0][0]
-            pollution_prob = pred[0][1]
+            prob_array = predict_deforestation_pollution(deforestation_model, image)
+
             classified = satelite_image_classification(satellite_image_model, image)
             iot_predict = generelizePredict(iot_pipe, iot_model, AQI, PM25, PM10, O3, CO, SO2, NO2)
 
-            print(deforestation_prob)
+            #sending the prob_array to make 2d array insted of numpy array
+            prob_array = map_top_probabilities(prob_array)
+            print(prob_array)
 
             db_data = {
                 "user_email": user_email,
@@ -318,15 +319,14 @@ def upload_singular_data(request):
                 "CO": CO,
                 "SO2": SO2,
                 "NO2": NO2,
-                "deforestationProbability": float(deforestation_prob) if isinstance(deforestation_prob, np.float32) else deforestation_prob,
-                "airPollutionProbability": float(pollution_prob) if isinstance(pollution_prob, np.float32) else pollution_prob,
+                "prob_array" :prob_array,
                 "areaClassification": classified,
                 "airQualityClassification": iot_predict,
             }
             
             # Save to Firebase Database
             database.child("user_images").push(db_data)
-            
+            print(db_data)
             # Log IoT data for debugging
             print(f"IoT Data: {iot_data}")
 
@@ -389,8 +389,7 @@ def upload_insightscan_data(request):
             CO = int(0 if request.POST.get('CO') == '' or request.POST.get('CO') is None else request.POST.get('CO'))
             SO2 = int(0 if request.POST.get('SO2') == '' or request.POST.get('SO2') is None else request.POST.get('SO2'))
             NO2 = int(0 if request.POST.get('NO2') == '' or request.POST.get('NO2') is None else request.POST.get('NO2'))
-            deforestationProbability = request.POST.get('deforestationProbability')
-            airPollutionProbability = request.POST.get('airPollutionProbability')
+            prob_array = request.POST.get('prob_array')
             areaClassification = request.POST.get('areaClassification')
             airQualityClassification = request.POST.get('airQualityClassification')
 
@@ -408,8 +407,7 @@ def upload_insightscan_data(request):
                 "CO": CO,
                 "SO2": SO2,
                 "NO2": NO2,
-                "deforestationProbability": deforestationProbability,
-                "airPollutionProbability": airPollutionProbability,
+                "prob_array": prob_array,
                 "areaClassification": areaClassification,
                 "airQualityClassification": airQualityClassification,
             }
@@ -498,12 +496,12 @@ def insight_scan_prediction(request):
 
             # deforestation_prob, pollution_prob, classified, iot_predict = generelizePredict(
             #     model, satellite_image_model, iot_pipe, iot_model, local_image_path, AQI, PM25, PM10, O3, CO, SO2, NO2)
-            pred = predict_deforestation_pollution(model ,image)
-            deforestation_prob = pred[0][0]
-            pollution_prob = pred[0][1]
+            prob_array = predict_deforestation_pollution(deforestation_model ,image)
             classified = satelite_image_classification(satellite_image_model ,image)
             iot_predict = generelizePredict(iot_pipe,iot_model,AQI,PM25,PM10,O3,CO,SO2,NO2)
-
+            print(prob_array)
+            print(type(prob_array[0][0]))
+            prob_array = map_top_probabilities(prob_array)
             # # Ensure models are not None
             # if model is None :
             #     print("one")
@@ -516,24 +514,23 @@ def insight_scan_prediction(request):
 
             # deforestation_prob, pollution_prob, classified, iot_predict = generelizePredict(
                 # model, satellite_image_model, iot_pipe, iot_model, local_image_path, AQI, PM25, PM10, O3, CO, SO2, NO2)
+            
             output = {
-                "deforestationProbability": float(deforestation_prob) if isinstance(deforestation_prob, np.float32) else deforestation_prob,
-                "airPollutionProbability": float(pollution_prob) if isinstance(pollution_prob, np.float32) else pollution_prob,
                 "areaClassification": classified,
                 "airQualityClassification": iot_predict,
             }
             
             prompt = f'''
-            You are an expert meteorologist. Given the image and Based on the following data: Deforestation Probability is {deforestation_prob}, Pollution Probability is {pollution_prob}, Classified as: {classified}", Air Quality: {iot_predict}, location: {location}. Make a good summary of it also using the image and suggest any actionable steps to take for environment conservation. Give the results in the form of a JSON object like this:
+            You are an expert meteorologist. Given the image and Based on the following data: Deforestation Probability is {prob_array}, Classified as: {classified}", Air Quality: {iot_predict}, location: {location}. Make a good summary of it also using the image and suggest any actionable steps to take for environment conservation. Give the results in the form of a JSON object like this:
             {{
             "summary": "",
             "actions": ["action1", "action2"]
             }}
             Don't add any other text before or after the JSON, only JSON.
             '''
+
             result_geminimodel = getsatelliteimageinfo(prompt,image)
 
-            
             try:
                 result_dict = json.loads(result_geminimodel)
                 summary = result_dict.get("summary", "")
@@ -541,7 +538,8 @@ def insight_scan_prediction(request):
                 
                 output['summary'] = summary
                 output['actions'] = actions
-
+                output['prob_array'] = prob_array
+                print(output)
                 return JsonResponse({'data': output}, status=200)
             
             except json.JSONDecodeError as e:
@@ -550,7 +548,6 @@ def insight_scan_prediction(request):
         except Exception as e:
             print(f"Error in insight_scan_prediction: {e}")
             return JsonResponse({'error': str(e)}, status=500)
-        
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
 
@@ -603,6 +600,9 @@ def upload_excel_data(request):
                         image = Image.open(image_data)
                         image.verify()  # Verify the image
                         image = Image.open(image_data)
+                        prob_array = predict_deforestation_pollution(deforestation_model ,image)
+                        prob_array  = map_top_probabilities(prob_array)
+                        classified = satelite_image_classification(satellite_image_model ,image)
                     except (IOError, SyntaxError) as e:
                         logger.error(f"Invalid image: {e}")
                         return JsonResponse({'error': 'Invalid image'}, status=400)
@@ -616,7 +616,9 @@ def upload_excel_data(request):
                     "user_id": uid,
                     "date": date,
                     "location": location,
-                    "link":image_link,
+                    "file":image_link,
+                    "areaClassification": classified,
+                    "prob_array":prob_array,
                     "O3":O3 if O3 else -1,
                     "CO":CO if CO else -1,
                     "NO2":NO2 if NO2 else -1,
@@ -679,3 +681,21 @@ def get_satellite_date(request):
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=405)
+    
+
+def map_top_probabilities(prob_array):
+    names = ['agriculture', 'artisinal_mine', 'bare_ground', 'blow_down', 
+             'conventional_mine', 'habitation', 'selective_logging', 'slash_burn']
+
+    row = prob_array[0]
+
+        # Convert probabilities to Python float
+    row = row.astype(float)
+    
+    # Get the indices of the top 3 probabilities
+    top_indices = np.argsort(row)[::-1]
+    
+    # Map the probabilities to their corresponding names
+    top_probabilities = [[round(row[i] , 4), names[i]] for i in top_indices]
+    
+    return top_probabilities
