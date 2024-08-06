@@ -47,7 +47,7 @@ const ExcelToJson = () => {
                     AQI: row.AQI || null,
                     PM2_5: row.PM2_5 || null,
                     PM10: row.PM10 || null,
-                    idToken:idToken
+                    idToken: idToken
                 }));
 
                 const invalidRows = validatedData.filter(
@@ -91,7 +91,7 @@ const ExcelToJson = () => {
         try {
             const response = await axios.post('http://127.0.0.1:8000/upload-excel-data/', jsonOutput, {
                 headers: {
-                     'Content-Type': 'application/json'
+                    'Content-Type': 'application/json'
                 }
             });
 
@@ -121,6 +121,21 @@ const ExcelToJson = () => {
         <Container style={{ paddingTop: "70px" }}>
             <div className='my-5'>
                 <TitleFont text="Excel File :" />
+                <div className='lightblue-container' style={{ padding: "4px 8px" }}>
+                    <p>Excel File should contain cloumns : link, location and date </p>
+                    <p>if you have iot date you can add columns : O3, CO, NO2, SO2, AQI, PM2_5, PM10</p>
+                    <p className="Form-title" style={{ fontSize: "1rem" }}>
+                        Sample XLSX file :
+                        <a
+                            href="./sample.xlsx" // Path to your XLSX file
+                            download="sample.xlsx" // Suggested filename for the download
+                            className="btn btn-primary ms-2" // Bootstrap button classes
+                            style={{ transform: "translateY(-3px)" }} // Inline style for slight vertical adjustment
+                        >
+                            Download
+                        </a>
+                    </p>
+                </div>
                 <Form className='mb-3'>
                     <div
                         {...getRootProps({
@@ -143,7 +158,7 @@ const ExcelToJson = () => {
                     onClick={handleSubmit}
                     disabled={jsonOutput.length === 0 || loading} // Disable until JSON data is present and not loading
                 />
-
+                
                 {error && (
                     <Alert variant="danger" className="mt-4">
                         {error}

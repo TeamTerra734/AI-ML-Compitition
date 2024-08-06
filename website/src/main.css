@@ -54,52 +54,59 @@ body {
     box-sizing: border-box !important;
     background-color: var(--SIA-blue);
     color: var(--SIA-white);
-    width:100vw;
-    overflow-y: hidden;
+    width: 100%;
+    overflow-y: hidden !important;
 }
+
+.mainUser{
+    width: 100% !important;
+}
+
 .chat-container {
-  max-width: 400px;
-  height: 500px;
-  border: 1px solid var(--SIA-gray);
-  border-radius: 8px;
-  background-color: var(--SIA-white);
-  padding: 10px;
+    max-width: 400px;
+    height: 500px;
+    border: 1px solid var(--SIA-gray);
+    border-radius: 8px;
+    background-color: var(--SIA-white);
+    padding: 10px;
 }
 
 .messages {
-  height: calc(100% - 60px); /* Adjust height based on form height */
-  padding: 10px;
-  background-color: var(--SIA-gray);
-  overflow-y: auto;
-  border-radius: 8px;
+    height: calc(100% - 60px);
+    /* Adjust height based on form height */
+    padding: 10px;
+    background-color: var(--SIA-gray);
+    overflow-y: auto;
+    border-radius: 8px;
 }
 
 .message {
-  padding: 8px 12px;
-  margin: 5px 0;
-  border-radius: 12px;
-  max-width: 80%;
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 12px;
+    max-width: 80%;
 }
 
 .message.user {
-  background-color: var(--SIA-blue);
-  color: var(--SIA-white);
-  align-self: flex-end;
+    background-color: var(--SIA-blue);
+    color: var(--SIA-white);
+    align-self: flex-end;
 }
 
 .message.bot {
-  background-color: var(--SIA-lightblue);
-  color: var(--SIA-black);
-  align-self: flex-start;
+    background-color: var(--SIA-lightblue);
+    color: var(--SIA-black);
+    align-self: flex-start;
 }
 
 .message-form {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  padding: 5px;
-  background-color: var(--SIA-white);
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 5px;
+    background-color: var(--SIA-white);
 }
+
 /*------------------------Home---------------------------------*/
 .nav-link {
     color: var(--SIA-white) !important;
@@ -172,15 +179,18 @@ button {
     color: var(--SIA-green);
     transition: all 0.5s;
 }
-.herobutton.disable{
+
+.herobutton.disable {
     background-color: var(--SIA-green);
     color: var(--SIA-black);
     opacity: 0.4;
 }
+
 .herobutton.disable>svg {
     fill: var(--SIA-black);
     transition-delay: 50ms;
 }
+
 .herobutton:hover {
     background-color: var(--SIA-green);
     color: var(--SIA-black);
@@ -225,6 +235,12 @@ button {
     width: 100%;
 }
 
+.default-img {
+    background-image: url("./Pages/App/InsightScan/images/upload.png");
+    background-size: contain;
+    background-position: 50%;
+}
+
 .searchicon {
     position: absolute;
     height: 25%;
@@ -235,20 +251,20 @@ button {
 
 .lightblue-container {
     background-color: var(--SIA-lightblue);
-    padding: 24px;
+    padding: 24px !important;
     width: 100%;
     margin: 20px 0;
 }
 
-.center_container{
+.center_container {
     .container {
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 100vh;
-         /* Optional: Full viewport height */
-      }
-      
+        /* Optional: Full viewport height */
+    }
+
 }
 
 .svg-lb-container {
@@ -260,34 +276,112 @@ button {
     margin-right: 20px;
 }
 
-.phone-earthimg.Earthsvg{
+.phone-earthimg.Earthsvg {
     display: none;
 }
-.Form-title{
+
+.Form-title {
     font-weight: 700;
     font-size: 1.5rem;
 }
-.compulsorySVG{
+
+.compulsorySVG {
     display: inline-block;
     height: 2.5rem;
     margin-left: 10px;
 }
-.display-none{
+
+.display-none {
     display: none;
 }
+
 .btn-close {
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
 }
-.betweenOR{
+
+.betweenOR {
     color: var(--SIA-green);
     font-size: 3rem;
     text-align: center;
 }
-.MuiChartsLegend-series{
+
+.MuiChartsLegend-series {
     margin-left: 10px;
 }
+
+.color-image {
+    width: 100%;
+    object-fit: contain;
+}
+
+.color-div {
+    height: 20px;
+    width: 20px;
+    transform: translateY(20%);
+    border: 2px solid var(--SIA-white);
+    display: inline-block;
+}
+
+.color-image-conatiner {
+    justify-content: end;
+    align-content: end;
+}
+
+.arrow-div {
+    position: absolute;
+    top: calc(50% - 70px);
+    right: -65px;
+}
+
+.arrow-div {
+    height: 100px;
+    width: 120px;
+}
+
+.AQI_image_div{
+    height: 200px;
+    padding: 20px;
+    width: 100%;
+    background-color: var(--SIA-darkblue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.AQI_image{
+    height: 100%;
+    max-width: 100%;
+    position: relative;
+}
+
+.classifier_hand {
+    position: absolute;
+    width: 35%;
+    height: 50px;
+    z-index: 999;
+    rotate:0deg ;
+    transition: rotate 3s;
+    bottom: -10px;
+    left: calc(14%); /* You might want to position it to the left as well */
+    background-color: var(--SIA-white); 
+    transform-origin: 98% 40%;
+    outline: 2px solid #000000;
+    clip-path: polygon(19% 29%, 20% 36%, 100% 35%, 100% 52%, 20% 53%, 20% 60%, 0 46%);/* Optional: add a background color */
+}
+.mytable, tr, td{
+    background-color: var(--SIA-darkblue) !important;
+    color: var(--SIA-gray) !important;
+}
+.mytable th{
+    background-color: var(--SIA-darkblue) !important;
+    color: var(--SIA-white) !important;
+}
+.mytable{
+    border-color:var(--SIA-black) !important;
+}
+
 @keyframes rotate {
     100% {
         transform: rotate(360deg);
@@ -303,7 +397,7 @@ button {
     .myfix2 {
         width: 450px;
         aspect-ratio: 1/1;
-        
+
     }
 
     .myfix {
@@ -343,8 +437,21 @@ button {
     .myfix2 {
         width: 400px;
     }
-    .betweenOR{
+
+    .betweenOR {
         font-size: 2rem;
+    }
+
+    .color-image-conatiner {
+        justify-content: start;
+        align-content: start;
+        margin-top: 100px !important;
+    }
+
+    .arrow-div {
+        top: 100%;
+        right: 50%;
+        transform: translateX(-10px) rotate(90deg);
     }
 }
 
@@ -361,6 +468,12 @@ button {
 
     .herobutton>svg {
         height: 1.4rem;
+    }
+
+    .arrow-div {
+        top: 100%;
+        right: 50%;
+        transform: translateX(20px) rotate(90deg) scale(50%);
     }
 }
 
@@ -389,11 +502,13 @@ button {
         /* Center the image */
         width: 12%;
     }
+
     .svg-lb-container>img {
         height: calc(15px + 1rem);
         margin-right: 10px;
     }
-    .sm-padding{
+
+    .sm-padding {
         padding: 14px !important;
     }
 }
@@ -402,12 +517,17 @@ button {
     .myfix2 {
         display: none;
     }
-    .Earthsvg{
+
+    .Earthsvg {
         display: none;
     }
-    .phone-earthimg.Earthsvg{
+
+    .phone-earthimg.Earthsvg {
         display: block;
     }
-    
+
+    .scroll-small {
+        overflow-x: scroll;
+    }
 
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import HeroButton from "../Components/HeroButton";
 import axios from "axios";
-import Cookies from "js-cookie"
+import Cookies from "js-cookie"   
 
 function ImageUploadForm(props) {
     var [data1, setData1] = [,];
@@ -240,7 +240,7 @@ function ImageUploadForm(props) {
             <div className="col-lg-6 col-md-12 col-sm-12 order-lg-1 order-md-2 order-2">
                 <div className="d-flex justify-content-start align-items-center imageContainer">
                     <div className="imageAnalysisDiv">
-                        <img src={imageUrl} alt="Upload the image" style={{ objectFit: "contain" }} className="analysisImg" />
+                        <img src={imageUrl}  style={{ objectFit: "contain"}} className="analysisImg default-img" />
                     </div>
                 </div>
             </div>
