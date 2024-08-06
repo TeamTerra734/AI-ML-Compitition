@@ -23,13 +23,23 @@ const DashBoard = () => {
  
   ]);
 
+  let locationMap=new Map()
+  let ClassMap=new Map()
+
+const [locations,setlocations]=useState([])
+const [classes,setClasses]=useState([])
+ const [selectLocation,setSelectLocation]=useState("ALL")
+ const [selectclasses,setSelectClasses]=useState("agriculture")
+
+ 
+
   const [barData, setBarData] = useState([
  
   ]);
   const [lineChart, setLineChart] = useState({
     dates: [],
     deforestation: [],
-    airPollution: [],
+ 
   });
   const [table, setTableData] = useState([
     
@@ -82,18 +92,17 @@ const DashBoard = () => {
     // 'dates':[],'deforestation':[],'airPollution':[]
     let dates = [];
     let deforestation = [];
-    let airpollution = [];
+
 
     for (let index = 0; index < lineChartData.length; index++) {
       dates.push(lineChartData[index][0]);
       deforestation.push(lineChartData[index][1]);
-      airpollution.push(lineChartData[index][2]);
+    
     }
 
     let obj = {
       dates: dates,
-      deforestation: deforestation,
-      airPollution: airpollution,
+      deforestation: deforestation
     };
     setLineChart(obj);
   }
@@ -111,13 +120,13 @@ const DashBoard = () => {
           { value: 0, label: "Desert" },
           { value: 0, label: "Water" },
         ];
-
+let index1=[0,0,0,0,0,0,0,0];
         let image_count = 0;
         let areaClassified = new Map();
         let airQualityClassificationArray = [0, 0, 0, 0, 0, 0];
         let fullObj = [];
         let lineChartData = [];
-        console.log(Cookies.get('idToken'),"id")
+     
         const response = await axios.get(request_url ,{
             params: {
     user_id: Cookies.get('idToken')
@@ -129,26 +138,56 @@ const DashBoard = () => {
 
         let response_data = response.data;
       
-      console.log(response)
-        console.log(response_data)
+  
+        console.log(response_data,"RESPONSE DATA")
         response_data['data'].forEach((element) => {
           let image_url = element.file;
           let areaClassification = element.areaClassification;
           let airQualityClassification = element.airQualityClassification;
           let date = element.date;
-          let deforestationProbability = element.deforestationProbability;
-          let airPollutionProbability = element.airPollutionProbability;
+          let prob_arr=element.prob_array
+          let deforestationProbability = prob_arr[0][0];
+       
           let location = element.location;
+
+          locationMap.get(location)?locationMap.get(location).push(element):locationMap.set(location,[element])
+          for (let index = 0; index < prob_arr.length; index++) {
+          let probability=prob_arr[index][0]
+          let probability_class=prob_arr[index][1]
+          ClassMap.get(probability_class)?ClassMap.get(probability_class).push([new Date(date),probability]):ClassMap.set(probability_class,[[new Date(date),probability]])
+          }
+      
+
+
 
           let obj = {
             image_url: image_url ? image_url : "Not Availabel",
             Date: date ? new Date(date) : "00-00-00",
             location: location ? location : "Not Availabel",
-            Deforestation: deforestationProbability
-              ? deforestationProbability
+            Deforestation:(prob_arr.length==8&& ClassMap.get("agriculture")[index1[0]][1])
+              ?  ClassMap.get("agriculture")[index1[0]++][1]
               : NaN,
-            AirPollution: airPollutionProbability
-              ? airPollutionProbability
+          
+           bare_ground:(prob_arr.length==8&& ClassMap.get("bare_ground")[index1[1]][1])
+              ?  ClassMap.get("bare_ground")[index1[1]++][1]
+              : NaN,
+           slash_burn:(prob_arr.length==8&& ClassMap.get("slash_burn")[index1[2]][1])
+              ?  ClassMap.get("slash_burn")[index1[2]++][1]
+              : NaN,
+               habitation:(prob_arr.length==8&& ClassMap.get("habitation")[index1[3]][1])
+              ?  ClassMap.get("habitation")[index1[3]++][1]
+              : NaN,
+                blow_down:(prob_arr.length==8&& ClassMap.get("blow_down")[index1[4]][1])
+              ?  ClassMap.get("blow_down")[index1[4]++][1]
+              : NaN,
+                conventional_mine:(prob_arr.length==8&& ClassMap.get("conventional_mine")[index1[5]][1])
+              ?  ClassMap.get("conventional_mine")[index1[5]++][1]
+              : NaN,
+               artisinal_mine:(prob_arr.length==8&& ClassMap.get("artisinal_mine")[index1[6]][1])
+              ?  ClassMap.get("artisinal_mine")[index1[6]++][1]
+              : NaN,
+                selective_logging:(prob_arr.length==8&& ClassMap.get("selective_logging")[index1[7]][1])
+              ?  ClassMap.get("selective_logging")[index1[7]++][1]
               : NaN,
             ImageCategory: areaClassification
               ? areaClassification
@@ -159,11 +198,11 @@ const DashBoard = () => {
           };
           fullObj.push(obj);
 
-          if (date && deforestationProbability && airPollutionProbability) {
+          if (date && deforestationProbability ) {
             lineChartData.push([
               new Date(date),
               deforestationProbability,
-              airPollutionProbability,
+           
             ]);
           }
 
@@ -184,12 +223,18 @@ const DashBoard = () => {
           );
         });
 
-        lineChartData.sort((a, b) => a[0] - b[0]);
+       
+        lineChartData=ClassMap.get("agriculture")
+        lineChartData.sort((a, b) => a[0] - b[0])
+        console.log(lineChartData,"data")
         setLineChartData(lineChartData);
         setImageCountData(image_count);
         setPieChartData(data, areaClassified);
         setBarChartData(airQualityClassificationArray);
         setTableDataFunction(fullObj);
+
+            setlocations((prev)=>(locationMap))
+            setClasses((prev)=>(ClassMap))
 });
 
       } catch (error) {
@@ -198,7 +243,159 @@ const DashBoard = () => {
     };
 
     fetchData();
+
   }, []);
+
+  const onLocationChange=(e)=>{
+
+    const val=e.target.value
+    
+    let fullArr=[];
+    let data = [
+          { value: 0, label: "Cloudy" },
+          { value: 0, label: "Green_Area" },
+          { value: 0, label: "Desert" },
+          { value: 0, label: "Water" },
+        ];
+     let image_count = 0;
+        let areaClassified = new Map();
+        let airQualityClassificationArray = [0, 0, 0, 0, 0, 0];
+        let fullObj = [];
+        let lineChartData = [];
+        let index1=[0,0,0,0,0,0,0,0]
+        ClassMap=new Map()
+    if(val=='ALL'){
+     Array.from(locations.keys()).forEach((element)=>{
+      let locArr=locations.get(element)
+      locArr.forEach((objs)=>{
+        fullArr.push(objs)
+      })
+     })
+    }
+    else{
+  
+     fullArr= locations.get(val);
+
+    }
+
+    fullArr.forEach((element,index) => {
+          let prob_arr=element.prob_array
+        
+          let image_url = element.file;
+          let areaClassification = element.areaClassification;
+          let airQualityClassification = element.airQualityClassification;
+          let date = element.date;
+
+          let deforestationProbability = prob_arr[0][0];
+        
+       
+          let location = element.location;
+
+        
+
+  for (let index = 0; index < prob_arr.length; index++) {
+          let probability=prob_arr[index][0]
+          let probability_class=prob_arr[index][1]
+          ClassMap.get(probability_class)?ClassMap.get(probability_class).push([new Date(date),probability]):ClassMap.set(probability_class,[[new Date(date),probability]])
+          }
+      
+
+
+          let obj = {
+            image_url: image_url ? image_url : "Not Availabel",
+            Date: date ? new Date(date) : "00-00-00",
+            location: location ? location : "Not Availabel",
+              Deforestation:(prob_arr.length==8&& ClassMap.get("agriculture")[index1[0]][1])
+              ?  ClassMap.get("agriculture")[index1[0]++][1]
+              : NaN,
+          
+           bare_ground:(prob_arr.length==8&& ClassMap.get("bare_ground")[index1[1]][1])
+              ?  ClassMap.get("bare_ground")[index1[1]++][1]
+              : NaN,
+           slash_burn:(prob_arr.length==8&& ClassMap.get("slash_burn")[index1[2]][1])
+              ?  ClassMap.get("slash_burn")[index1[2]++][1]
+              : NaN,
+               habitation:(prob_arr.length==8&& ClassMap.get("habitation")[index1[3]][1])
+              ?  ClassMap.get("habitation")[index1[3]++][1]
+              : NaN,
+                blow_down:(prob_arr.length==8&& ClassMap.get("blow_down")[index1[4]][1])
+              ?  ClassMap.get("blow_down")[index1[4]++][1]
+              : NaN,
+                conventional_mine:(prob_arr.length==8&& ClassMap.get("conventional_mine")[index1[5]][1])
+              ?  ClassMap.get("conventional_mine")[index1[5]++][1]
+              : NaN,
+               artisinal_mine:(prob_arr.length==8&& ClassMap.get("artisinal_mine")[index1[6]][1])
+              ?  ClassMap.get("artisinal_mine")[index1[6]++][1]
+              : NaN,
+                selective_logging:(prob_arr.length==8&& ClassMap.get("selective_logging")[index1[7]][1])
+              ?  ClassMap.get("selective_logging")[index1[7]++][1]
+              : NaN,
+          
+            ImageCategory: areaClassification
+              ? areaClassification
+              : "Not Availabel",
+            IotCategory: airQualityClassification
+              ? airQualityClassification
+              : "Not Availabel",
+          };
+          fullObj.push(obj);
+
+          if (date && deforestationProbability ) {
+            lineChartData.push([
+              new Date(date),
+              deforestationProbability,
+           
+            ]);
+          }
+
+          if (image_url && image_url.length != 0) {
+            image_count++;
+          }
+          if (areaClassification && areaClassification.length != 0) {
+            areaClassified.set(
+              areaClassification.toUpperCase(),
+              areaClassified.get(areaClassification) == undefined
+                ? 1
+                : areaClassified.get(areaClassification) + 1
+            );
+          }
+          checkAirQualityClassification(
+            airQualityClassification,
+            airQualityClassificationArray
+          );
+        });
+
+       
+        lineChartData=ClassMap.get("agriculture")
+lineChartData.sort((a, b) => a[0] - b[0]);
+
+console.log(lineChartData,"linechartdatain change")
+        setLineChartData(lineChartData);
+        setImageCountData(image_count);
+        setPieChartData(data, areaClassified);
+        setBarChartData(airQualityClassificationArray);
+        setTableDataFunction(fullObj);
+           
+            setSelectLocation((prev)=>val)
+            setClasses((prev)=>ClassMap)
+            setSelectClasses("agriculture")
+            
+  }
+
+  const onClassChange=(e)=>{
+    const val=e.target.value
+    console.log(val,classes)
+    let fullClassarr=[]
+  
+   
+
+     fullClassarr=classes.get(val)
+    
+        fullClassarr.sort((a, b) => a[0] - b[0])
+        setLineChartData(fullClassarr)
+        setSelectClasses(val)
+
+  }
 
   useEffect(() => {
     gsap.from(containerRef.current, {
@@ -219,18 +416,19 @@ const DashBoard = () => {
       <div className="mainDashBoard">
         <div className="text ">
           <StyleTitle>
-            <PersistentDrawerLeft setPage={setCurrentPage} />
+            <PersistentDrawerLeft setPage={setCurrentPage}  locationSet={locations} changeLocation={onLocationChange} selectLocation={selectLocation}/>
           </StyleTitle>
         </div>
         <div className="graphCard"></div>
         {currentPage == 0 && (
           <div className="home">
+        
             <div className="cards">
               <div className="count  card-item" ref={cardRef}>
                 <BasicCard count={count} />
               </div>
               <div className="piechart card-item">
-                <PieArcLabel value={value} />
+                <PieArcLabel value={value}/>
               </div>
               <div className="barLabel card-item">
                 <BarLabel barData={barData} />
@@ -238,7 +436,21 @@ const DashBoard = () => {
             </div>
             <div className="line ">
               <div className="linechart card-item">
-                <MarkOptimization lineChart={lineChart} />
+                <div className="labelDropDown">
+                  <div className="input">
+                    <select name="" id="" onChange={onClassChange} value={selectclasses} >
+                  
+                      {
+                        (classes.keys())?Array.from(classes.keys()).map((element)=>{
+return (
+  element?<option key={element} value={element}>{element}</option>:<></>
+)
+                        }):""
+                      }
+                    </select>
+                  </div>
+                </div>
+                <MarkOptimization lineChart={lineChart}   selectclasses={selectclasses}/>
               </div>
             </div>
           </div>

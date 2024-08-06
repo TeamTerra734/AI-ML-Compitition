@@ -7,8 +7,9 @@ import {useTheme} from '@mui/material';
 import { format } from 'date-fns'; 
 import {useMediaQuery} from '@mui/material';
 
-export default function MarkOptimization({lineChart}) {
+export default function MarkOptimization({lineChart,selectclasses}) {
 
+console.log(lineChart,"linechart")
 
    const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -72,22 +73,16 @@ export default function MarkOptimization({lineChart}) {
             label:"Probability"
         }
     ]}
-    title='TIME V/S Deforestation And Air Pollution Probability'
+    title='TIME V/S Deforestation Cause(chances)'
       series={[
         {
            curve: "monotoneX",data: lineChart.deforestation ,
          color:'#e7be5b',
           showMark: ({ index }) => index % 2 === 0,
-          label:"Deforestation",
+          label:selectclasses,
           
           
-        },
-        {
-          curve: "monotoneX", data: lineChart.airPollution, 
-          label:"Air Pollution"
-
-        },
-    
+        }
       ]}
  
       width={chartWidth}

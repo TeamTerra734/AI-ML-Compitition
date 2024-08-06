@@ -163,3 +163,29 @@ background-color: #54608e !important;
 .css-1ie9w8x{
     display: none !important;
 }
+
+/* for dropdown */
+.locationDropDown {
+    margin: 5px 20px ;
+  
+
+}
+
+.locationDropDown select{
+padding: 4px 8px  ;
+border-radius: 4px;
+}
+
+
+/* for labels dropwdown in linechart */
+.labelDropDown {
+    margin: 0px 5px ;
+  position: absolute;
+  right:10%;
+
+}
+
+.labelDropDown select{
+    padding: 4px 8px  ;
+border-radius: 4px;
+}

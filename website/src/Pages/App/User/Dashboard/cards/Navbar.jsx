@@ -75,10 +75,12 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
-export default function PersistentDrawerLeft({setPage}) {
-
+export default function PersistentDrawerLeft({setPage,locationSet,changeLocation,selectLocation}) {
+  console.log(selectLocation,"navbar")
+console.log(locationSet,"locationset")
    
  const [selected, setSelected] = useState(0);
+
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isMediumScreen = useMediaQuery(theme.breakpoints.between('sm', 'md'));
@@ -131,6 +133,19 @@ else{
          DashBoard
          <AccountCircleOutlinedIcon sx={{position:"absolute",right:10,top:15}}/>
           </Typography>
+            <div className="locationDropDown">
+            <div className="input">
+              <select name="" id="" onChange={changeLocation} value={selectLocation} >
+                <option value="ALL">ALL</option>
+                {
+                 (locationSet.keys())?Array.from(locationSet.keys()).map((element,index)=>{
+         return    (    <option key={element} value={element}>{element}</option>)
+
+                  }):""
+                }
+              </select>
+            </div>
+          </div>
         </Toolbar>
       </AppBar>
       <Drawer
