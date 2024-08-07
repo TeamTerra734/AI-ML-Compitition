@@ -59,7 +59,7 @@ config = {
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SERVICE_ACCOUNT_KEY_PATH = os.path.join(BASE_DIR,'geneco-e48a0-firebase-adminsdk-b8171-016266d9c6[1].json')
 
-
+new_prob_array = None 
 # Initialize Firebase Admin SDK
 cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
 firebase_admin.initialize_app(cred)
@@ -268,7 +268,7 @@ def upload_singular_data(request):
 
                 # Open the image for processing
                 image_data.seek(0)
-                image = Image.open(io.BytesIO(image_data.read()))
+
 
             else:
                 return JsonResponse({'error': 'Image not provided'}, status=400)
@@ -296,13 +296,16 @@ def upload_singular_data(request):
             }
             print(iot_data)
 
-            # Prediction
-            prob_array = predict_deforestation_pollution(deforestation_model, image)
-            classified = satelite_image_classification(satellite_image_model, image)
+            image_path = handle_uploaded_file(image_data)
+            # deforestation_prob, pollution_prob, classified, iot_predict = generelizePredict(
+            #     model, satellite_image_model, iot_pipe, iot_model, local_image_path, AQI, PM25, PM10, O3, CO, SO2, NO2)
+            prob_array = predict_deforestation_pollution(deforestation_model ,image_path)
+            classified = satelite_image_classification(satellite_image_model ,image_path)
             iot_predict = generelizePredict(iot_pipe, iot_model, AQI, PM25, PM10, O3, CO, SO2, NO2)
 
             #sending the prob_array to make 2d array insted of numpy array
             prob_array = map_top_probabilities(prob_array)
+            
             print(prob_array)
 
             db_data = {
@@ -389,6 +392,9 @@ def upload_insightscan_data(request):
             SO2 = int(0 if request.POST.get('SO2') == '' or request.POST.get('SO2') is None else request.POST.get('SO2'))
             NO2 = int(0 if request.POST.get('NO2') == '' or request.POST.get('NO2') is None else request.POST.get('NO2'))
             prob_array = request.POST.get('prob_array')
+            prob_array = convert_to_array_of_arrays(prob_array) 
+            print(prob_array)
+            print(type(prob_array))
             areaClassification = request.POST.get('areaClassification')
             airQualityClassification = request.POST.get('airQualityClassification')
 
@@ -602,10 +608,11 @@ def upload_excel_data(request):
                     try:
                         image = Image.open(image_data)
                         image.verify()  # Verify the image
-                        image = Image.open(image_data)
-                        prob_array = predict_deforestation_pollution(deforestation_model ,image)
-                        prob_array  = map_top_probabilities(prob_array)
-                        classified = satelite_image_classification(satellite_image_model ,image)
+                        image_path = handle_uploaded_file(image_data)
+        
+                        prob_array = predict_deforestation_pollution(deforestation_model ,image_path)
+                        classified = satelite_image_classification(satellite_image_model ,image_path)
+                            
                     except (IOError, SyntaxError) as e:
                         logger.error(f"Invalid image: {e}")
                         return JsonResponse({'error': 'Invalid image'}, status=400)
@@ -686,7 +693,7 @@ def get_satellite_date(request):
         return JsonResponse({'error': 'Invalid request method'}, status=405)
     
 
-def map_top_probabilities(prob_array):
+def map_top_probabilities(prob_array ):
     names = ['agriculture', 'artisinal_mine', 'bare_ground', 'blow_down', 
              'conventional_mine', 'habitation', 'selective_logging', 'slash_burn']
 
@@ -697,8 +704,30 @@ def map_top_probabilities(prob_array):
     
     # Get the indices of the top 3 probabilities
     top_indices = np.argsort(row)[::-1]
-    
     # Map the probabilities to their corresponding names
     top_probabilities = [[round(row[i] , 4), names[i]] for i in top_indices]
-    
+
     return top_probabilities
+
+def convert_to_array_of_arrays(prob_string):
+    # Split the string into elements based on commas
+    elements = prob_string.split(',')
+    
+    # Create an empty list to store the result
+    result = []
+    
+    # Iterate through the elements in pairs
+    for i in range(0, len(elements), 2):
+        # Extract the probability and the category
+        probability = float(elements[i])
+        category = elements[i+1]
+        
+        # Create an array with the probability and category
+        entry = [probability, category]
+        
+        # Add the array to the result list
+        result.append(entry)
+    
+    return result
+
+
