@@ -13,7 +13,7 @@ TF_ENABLE_ONEDNN_OPTS=0
 # Define the paths to your models
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 deforestation_model_path = os.path.join(BASE_DIR, 'home', 'prob_models', 'Deforestation.h5')
-satellite_image_model_path = os.path.join(BASE_DIR, 'home', 'prob_models', 'cnn_model_area.h5')
+satellite_image_model_path = os.path.join(BASE_DIR, 'home', 'prob_models', 'cnn_keras_model_area.h5')
 iot_model_pkl = os.path.join(BASE_DIR, 'home', 'prob_models', 'latest_iot.pkl')
 iot_model_h5 = os.path.join(BASE_DIR, 'home', 'prob_models', 'latest_iot.h5')
 
@@ -59,45 +59,53 @@ def load_models():
     
 
 
-def predict_deforestation_pollution(model, sample_image, img_size=(224, 224)):
+def predict_deforestation_pollution(model, sample_image):
 
-    # Load and preprocess image
-    
-    # Ensure the image is in RGB mode
+# Load the image
+    image = tf.io.read_file(sample_image)
+    image = tf.image.decode_jpeg(image, channels=3)
 
-    if sample_image.mode != 'RGB':
-        sample_image = sample_image.convert('RGB')
-    sample_image = sample_image.resize((224,224))
-    sample_image = image.img_to_array(sample_image)
-    sample_image =np.expand_dims(sample_image,axis=0)
-    sample_image = sample_image.astype('float32')
-    
-    # Make a prediction using the model
-    preds = model.predict(sample_image)
-    return preds
+    # Resize the image
+    image = tf.image.resize(image, (224, 224))
+
+    # Normalize the image to [0, 1]
+    # image = image / 255.0
+
+    # Add a batch dimension
+    image = tf.expand_dims(image, axis=0)
+
+    predictions = model.predict(image)
+
+    return predictions
 
 
-def satelite_image_classification(model, sample_image):
+def satelite_image_classification(model, sample_image_path):
+    print("called")
+    print("*"*50)
     classes = {
         0: "cloudy",
         1: "desert",
         2: "water",
         3: "green_area"
     }
-    if sample_image.mode != 'RGB':
-        sample_image = sample_image.convert('RGB')
-    sample_image = sample_image.resize((224,224))
-    sample_image = image.img_to_array(sample_image)
-    sample_image =np.expand_dims(sample_image,axis=0)
-    sample_image = sample_image.astype('float32')
-    # Make a prediction using the model
-    
-    predictions = model.predict(sample_image)
+    image = tf.io.read_file(sample_image_path)
+    image = tf.image.decode_jpeg(image, channels=3)
 
-    predicted_class_index = np.argmax(predictions)
-    predicted_class = classes[predicted_class_index]
+    # Resize the image
+    image = tf.image.resize(image, (224,224))
 
-    return predicted_class
+    # Normalize the image to [0, 1]
+    # image = image / 255.0
+
+    # Add a batch dimension
+    image = tf.expand_dims(image, axis=0)
+
+    predictions = model.predict(image)
+
+    predicted_class_index=tf.argmax(predictions, axis=1)
+    print(predictions)
+    print(predicted_class_index.numpy()[0])
+    return classes[predicted_class_index.numpy()[0]]
 
 def iot_data(pipeline,model,AQI,PM25,	PM10,	O3,	CO,	SO2,	NO2):
     X=np.array([AQI,PM25,PM10,O3,CO,SO2,NO2])
@@ -119,7 +127,7 @@ def generelizePredict(iot_pipeline,iot_model,AQI=None,PM25=None,	PM10=None,	O3=N
     # pollution_prob = preds[0][1]
 
     #classified=satelite_image_classification(satelite_model,img_path,img_size=(72,128))
-
+    print(AQI , PM25 , PM10 , O3 , CO , SO2 , NO2)
     iot_predict=iot_data(iot_pipeline,iot_model,AQI,PM25,	PM10,	O3,	CO,	SO2,	NO2)
 
 

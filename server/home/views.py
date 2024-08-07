@@ -19,7 +19,7 @@ import numpy as np
 import base64
 from firebase_admin import auth
 import logging
-from .ml_models import load_models, generelizePredict,generelizePredict_without_iot , satelite_image_classification
+from .ml_models import load_models, generelizePredict , satelite_image_classification , predict_deforestation_pollution 
 from keras._tf_keras.keras.preprocessing import image
 from django.conf import settings
 # Define the path to the model file
@@ -121,32 +121,32 @@ def start_session(request):
 
 
 
-def predict_deforestation_pollution(model, img, img_size=(224, 224)):
-    # Load and preprocess image
+# def predict_deforestation_pollution(model, img, img_size=(224, 224)):
+#     # Load and preprocess image
     
-    # Ensure the image is in RGB mode
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
+#     # Ensure the image is in RGB mode
+#     if img.mode != 'RGB':
+#         img = img.convert('RGB')
     
-    # Resize the image
-    img = img.resize(img_size)
+#     # Resize the image
+#     img = img.resize(img_size)
     
-    # Convert image to numpy array
-    x = image.img_to_array(img)
+#     # Convert image to numpy array
+#     x = image.img_to_array(img)
     
-    # Expand dimensions to match the input shape of the model
-    x = np.expand_dims(x, axis=0)
+#     # Expand dimensions to match the input shape of the model
+#     x = np.expand_dims(x, axis=0)
     
-    # Normalize pixel values
-    x = x / 255.0
+#     # Normalize pixel values
+#     x = x / 255.0
     
-    # Ensure the array is of type float32
-    x = x.astype('float32')
+#     # Ensure the array is of type float32
+#     x = x.astype('float32')
     
-    # Make a prediction using the model
-    preds = model.predict(x)
+#     # Make a prediction using the model
+#     preds = model.predict(x)
 
-    return preds
+#     return preds
 
 def pre(model, img, img_size=(224, 224)):
     # Load and preprocess image
@@ -298,7 +298,6 @@ def upload_singular_data(request):
 
             # Prediction
             prob_array = predict_deforestation_pollution(deforestation_model, image)
-
             classified = satelite_image_classification(satellite_image_model, image)
             iot_predict = generelizePredict(iot_pipe, iot_model, AQI, PM25, PM10, O3, CO, SO2, NO2)
 
@@ -462,9 +461,9 @@ def insight_scan_prediction(request):
     
     if request.method == 'POST':
         try:
-            print("Request body:", request.body)
-            print("Request POST data:", request.POST)
-            print("Request FILES data:", request.FILES)
+            # print("Request body:", request.body)
+            # print("Request POST data:", request.POST)
+            # print("Request FILES data:", request.FILES)
 
             user_email = request.session.get('email')
             user_id = request.session.session_key
@@ -472,12 +471,12 @@ def insight_scan_prediction(request):
             date = request.POST.get('date')
             location = request.POST.get('location')
             image_data = request.FILES.get('file')
-            image = Image.open(image_data)
-            
+            gemini_image = Image.open(image_data)
+            # image = np.array(gemini_image)
 
             # Get and log the other parameters
             AQI = int(request.POST.get('AQI', 0))
-            PM25 = int(request.POST.get('PM25', 0))
+            PM2_5 = int(request.POST.get('PM2_5', 0))
             PM10 = int(request.POST.get('PM10', 0))
             O3 = int(request.POST.get('O3', 0))
             CO = int(request.POST.get('CO', 0))
@@ -485,20 +484,22 @@ def insight_scan_prediction(request):
             NO2 = int(request.POST.get('NO2', 0))
 
             print(f"AQI: {AQI}")
-            print(f"PM25: {PM25}")
+            print(f"PM25: {PM2_5}")
             print(f"PM10: {PM10}")
             print(f"O3: {O3}")
             print(f"CO: {CO}")
             print(f"SO2: {SO2}")
             print(f"NO2: {NO2}")
 
-            # local_image_path = download_image(image_url, user_email)
 
+            # local_image_path = download_image(image_url, user_email)
+            
+            image_path = handle_uploaded_file(image_data)
             # deforestation_prob, pollution_prob, classified, iot_predict = generelizePredict(
             #     model, satellite_image_model, iot_pipe, iot_model, local_image_path, AQI, PM25, PM10, O3, CO, SO2, NO2)
-            prob_array = predict_deforestation_pollution(deforestation_model ,image)
-            classified = satelite_image_classification(satellite_image_model ,image)
-            iot_predict = generelizePredict(iot_pipe,iot_model,AQI,PM25,PM10,O3,CO,SO2,NO2)
+            prob_array = predict_deforestation_pollution(deforestation_model ,image_path)
+            classified = satelite_image_classification(satellite_image_model ,image_path)
+            iot_predict = generelizePredict(iot_pipe,iot_model,AQI,PM2_5,PM10,O3,CO,SO2,NO2)
             print(prob_array)
             print(type(prob_array[0][0]))
             prob_array = map_top_probabilities(prob_array)
@@ -518,27 +519,29 @@ def insight_scan_prediction(request):
             output = {
                 "areaClassification": classified,
                 "airQualityClassification": iot_predict,
-            }
-            
+            }   
+            print(output)
             prompt = f'''
-            You are an expert meteorologist. Given the image and Based on the following data: Deforestation Probability is {prob_array}, Classified as: {classified}", Air Quality: {iot_predict}, location: {location}. Make a good summary of it also using the image and suggest any actionable steps to take for environment conservation. Give the results in the form of a JSON object like this:
+            You are an expert meteorologist. Given the image and Based on the following data: Deforestation Probability is {prob_array}, Air Quality: {iot_predict}, location: {location}.Classify the image based on "cloudy","desert","water","green_area"and make a good summary of it also using the image and suggest any actionable steps to take for environment conservation. Give the results in the form of a JSON object like this:
             {{
             "summary": "",
-            "actions": ["action1", "action2"]
+            "actions": ["action1", "action2"],
             }}
             Don't add any other text before or after the JSON, only JSON.
             '''
 
-            result_geminimodel = getsatelliteimageinfo(prompt,image)
+            result_geminimodel = getsatelliteimageinfo(prompt,gemini_image)
 
             try:
                 result_dict = json.loads(result_geminimodel)
+                #areaClassification = result_dict.get("areaClassification", "")
                 summary = result_dict.get("summary", "")
                 actions = result_dict.get("actions", [])
                 
                 output['summary'] = summary
                 output['actions'] = actions
                 output['prob_array'] = prob_array
+                #output['areaClassification'] = areaClassification
                 print(output)
                 return JsonResponse({'data': output}, status=200)
             
